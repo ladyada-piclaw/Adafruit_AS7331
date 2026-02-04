@@ -1,6 +1,17 @@
 #include "Adafruit_AS7331.h"
 
-#define AS7331_SENS_UVA 385.0f // counts/(µW/cm²) at GAIN=2048x, TIME=64ms
+/**
+ * Base irradiance responsivity values from AS7331 datasheet (DS001047 v4-00)
+ * Table in Section 5 "Electrical Characteristics", parameter ReGAIN2048.
+ * Units: counts per (µW/cm²) at GAIN=2048x, TIME=64ms (65536 clocks),
+ * fCLK=1.024MHz
+ *
+ * These are typical values at the peak wavelengths:
+ *   UVA (λ=360nm): 385 counts/(µW/cm²)
+ *   UVB (λ=300nm): 347 counts/(µW/cm²)
+ *   UVC (λ=260nm): 794 counts/(µW/cm²)
+ */
+#define AS7331_SENS_UVA 385.0f
 #define AS7331_SENS_UVB 347.0f
 #define AS7331_SENS_UVC 794.0f
 
@@ -183,6 +194,28 @@ bool Adafruit_AS7331::readAllUV(uint16_t *uva, uint16_t *uvb, uint16_t *uvc) {
   return true;
 }
 
+/**
+ * Convert raw ADC counts to irradiance in µW/cm².
+ *
+ * Algorithm from AS7331 datasheet (DS001047 v4-00), Section 7.4
+ * "Measurement Result".
+ *
+ * The effective sensitivity scales with gain and integration time:
+ *   effective_sens = base_sens × (gain_factor / 2048) × (time_factor)
+ *
+ * Where:
+ *   - base_sens: Responsivity at GAIN=2048x, TIME=64ms (from datasheet Table 5)
+ *   - gain_factor = 2^(11 - gain_setting), ranging from 1 (GAIN_1X) to 2048
+ *     (GAIN_2048X)
+ *   - time_factor = 2^time_setting / 64, where TIME_64MS=6 gives factor=1.0
+ *
+ * Irradiance = counts / effective_sensitivity
+ *
+ * @param counts Raw ADC value from MRES register
+ * @param baseSensitivity Base responsivity for the channel
+ * (AS7331_SENS_UVA/B/C)
+ * @return Irradiance in µW/cm²
+ */
 float Adafruit_AS7331::_countsToIrradiance(uint16_t counts,
                                            float baseSensitivity) {
   // Use cached values instead of reading registers
@@ -201,21 +234,44 @@ float Adafruit_AS7331::_countsToIrradiance(uint16_t counts,
   return (float)counts / effective_sens;
 }
 
+/**
+ * Read UVA channel and convert to irradiance (µW/cm²).
+ * Uses cached gain/time settings for conversion.
+ * @return UVA irradiance in µW/cm²
+ */
 float Adafruit_AS7331::readUVA_uWcm2(void) {
   uint16_t counts = readUVA();
   return _countsToIrradiance(counts, AS7331_SENS_UVA);
 }
 
+/**
+ * Read UVB channel and convert to irradiance (µW/cm²).
+ * Uses cached gain/time settings for conversion.
+ * @return UVB irradiance in µW/cm²
+ */
 float Adafruit_AS7331::readUVB_uWcm2(void) {
   uint16_t counts = readUVB();
   return _countsToIrradiance(counts, AS7331_SENS_UVB);
 }
 
+/**
+ * Read UVC channel and convert to irradiance (µW/cm²).
+ * Uses cached gain/time settings for conversion.
+ * @return UVC irradiance in µW/cm²
+ */
 float Adafruit_AS7331::readUVC_uWcm2(void) {
   uint16_t counts = readUVC();
   return _countsToIrradiance(counts, AS7331_SENS_UVC);
 }
 
+/**
+ * Read all UV channels and convert to irradiance (µW/cm²).
+ * Uses cached gain/time settings for conversion.
+ * @param uva Optional storage for UVA irradiance.
+ * @param uvb Optional storage for UVB irradiance.
+ * @param uvc Optional storage for UVC irradiance.
+ * @return True on success, false on read failure.
+ */
 bool Adafruit_AS7331::readAllUV_uWcm2(float *uva, float *uvb, float *uvc) {
   uint16_t uva_raw = 0;
   uint16_t uvb_raw = 0;
