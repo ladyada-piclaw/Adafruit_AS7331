@@ -235,6 +235,45 @@ bool Adafruit_AS7331::readAllUV_uWcm2(float *uva, float *uvb, float *uvc) {
   return true;
 }
 
+bool Adafruit_AS7331::oneShot(uint16_t *uva, uint16_t *uvb, uint16_t *uvc) {
+  // Ensure we're in CMD mode and config state
+  powerDown(true);
+  setMeasurementMode(AS7331_MODE_CMD);
+  powerDown(false);
+
+  // Start single measurement
+  startMeasurement();
+
+  // Wait for measurement to complete (poll isDataReady or use timeout)
+  uint32_t start = millis();
+  while (!isDataReady()) {
+    if (millis() - start > 20000) { // 20 second timeout for longest integration
+      return false;
+    }
+    delay(1);
+  }
+
+  // Read results
+  return readAllUV(uva, uvb, uvc);
+}
+
+bool Adafruit_AS7331::oneShot_uWcm2(float *uva, float *uvb, float *uvc) {
+  uint16_t uva_raw, uvb_raw, uvc_raw;
+  if (!oneShot(&uva_raw, &uvb_raw, &uvc_raw)) {
+    return false;
+  }
+  if (uva) {
+    *uva = _countsToIrradiance(uva_raw, AS7331_SENS_UVA);
+  }
+  if (uvb) {
+    *uvb = _countsToIrradiance(uvb_raw, AS7331_SENS_UVB);
+  }
+  if (uvc) {
+    *uvc = _countsToIrradiance(uvc_raw, AS7331_SENS_UVC);
+  }
+  return true;
+}
+
 float Adafruit_AS7331::readTemperature(void) {
   uint16_t raw = 0;
   readRegister(AS7331_REG_TEMP, &raw);

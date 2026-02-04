@@ -108,6 +108,11 @@ public:
   float readUVC_uWcm2(void); // Read UVC and convert to µW/cm²
   bool readAllUV_uWcm2(float *uva, float *uvb, float *uvc);
 
+  bool oneShot(uint16_t *uva, uint16_t *uvb,
+               uint16_t *uvc); // Single measurement in CMD mode
+  bool oneShot_uWcm2(float *uva, float *uvb,
+                     float *uvc); // Single measurement with µW/cm² conversion
+
   float readTemperature(void);
   bool isDataReady(void);
   uint8_t getStatus(void);
