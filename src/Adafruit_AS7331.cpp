@@ -222,6 +222,35 @@ uint8_t Adafruit_AS7331::getBreakTime(void) {
   return val;
 }
 
+bool Adafruit_AS7331::setEdgeCount(uint8_t edges) {
+  Adafruit_BusIO_Register reg(_i2c_dev, AS7331_REG_EDGES);
+  return reg.write(edges);
+}
+
+uint8_t Adafruit_AS7331::getEdgeCount(void) {
+  Adafruit_BusIO_Register reg(_i2c_dev, AS7331_REG_EDGES);
+  uint8_t val = 0;
+  reg.read(&val);
+  return val;
+}
+
+bool Adafruit_AS7331::startMeasurement(void) {
+  Adafruit_BusIO_Register osr(_i2c_dev, AS7331_REG_OSR);
+  Adafruit_BusIO_RegisterBits ss(&osr, 1, 7);
+  return ss.write(1);
+}
+
+bool Adafruit_AS7331::stopMeasurement(void) {
+  Adafruit_BusIO_Register osr(_i2c_dev, AS7331_REG_OSR);
+  Adafruit_BusIO_RegisterBits ss(&osr, 1, 7);
+  return ss.write(0);
+}
+
+bool Adafruit_AS7331::hasLostData(void) {
+  uint8_t status = getStatus();
+  return (status & AS7331_STATUS_LDATA) != 0;
+}
+
 bool Adafruit_AS7331::enableDivider(bool enable) {
   Adafruit_BusIO_Register creg2(_i2c_dev, AS7331_REG_CREG2);
   Adafruit_BusIO_RegisterBits en_div(&creg2, 1, 3);

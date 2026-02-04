@@ -18,6 +18,7 @@
 #define AS7331_REG_CREG2 0x07
 #define AS7331_REG_CREG3 0x08
 #define AS7331_REG_BREAK 0x09
+#define AS7331_REG_EDGES 0x0A
 
 #define AS7331_STATUS_OUTCONVOF (1 << 7) // Output conversion overflow
 #define AS7331_STATUS_MRESOF (1 << 6)    // Measurement result overflow
@@ -113,6 +114,12 @@ public:
 
   bool setBreakTime(uint8_t breakTime); // 0-255, time = breakTime * 8µs
   uint8_t getBreakTime(void);
+
+  bool setEdgeCount(uint8_t edges); // 1-255 for SYND mode, 0 treated as 1
+  uint8_t getEdgeCount(void);
+  bool startMeasurement(void); // Set SS=1
+  bool stopMeasurement(void);  // Set SS=0
+  bool hasLostData(void);      // STATUS:LDATA flag
 
   bool enableDivider(bool enable);
   bool setDivider(uint8_t div); // 0-7, factor = 2^(1+div)
