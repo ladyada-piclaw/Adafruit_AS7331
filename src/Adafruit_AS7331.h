@@ -7,13 +7,24 @@
 #define AS7331_DEFAULT_ADDRESS 0x74
 
 #define AS7331_REG_OSR 0x00
+#define AS7331_REG_STATUS                                                      \
+  0x00 // STATUS is byte 1 when reading 16-bits from OSR in measurement state
 #define AS7331_REG_TEMP 0x01
 #define AS7331_REG_AGEN 0x02
 #define AS7331_REG_MRES1 0x02
 #define AS7331_REG_MRES2 0x03
 #define AS7331_REG_MRES3 0x04
 #define AS7331_REG_CREG1 0x06
+#define AS7331_REG_CREG2 0x07
 #define AS7331_REG_CREG3 0x08
+#define AS7331_REG_BREAK 0x09
+
+#define AS7331_STATUS_OUTCONVOF (1 << 7) // Output conversion overflow
+#define AS7331_STATUS_MRESOF (1 << 6)    // Measurement result overflow
+#define AS7331_STATUS_ADCOF (1 << 5)     // ADC overflow
+#define AS7331_STATUS_LDATA (1 << 4)     // Data in OUTCONV registers
+#define AS7331_STATUS_NDATA (1 << 3)     // New data available
+#define AS7331_STATUS_NOTREADY (1 << 2)  // Not ready (conversion in progress)
 
 #define AS7331_PART_ID 0x21
 
@@ -57,6 +68,13 @@ typedef enum {
   AS7331_MODE_SYND = 3,
 } as7331_mode_t;
 
+typedef enum {
+  AS7331_CLOCK_1024MHZ = 0,
+  AS7331_CLOCK_2048MHZ = 1,
+  AS7331_CLOCK_4096MHZ = 2,
+  AS7331_CLOCK_8192MHZ = 3,
+} as7331_clock_t;
+
 class Adafruit_AS7331 {
 public:
   Adafruit_AS7331();
@@ -65,12 +83,19 @@ public:
 
   bool powerDown(bool pd);
   bool setMeasurementMode(as7331_mode_t mode);
+  as7331_mode_t getMeasurementMode(void); // Get current measurement mode
+
+  bool reset(void);          // Software reset
+  uint8_t getDeviceID(void); // Returns part ID (expect 0x21)
 
   bool setGain(as7331_gain_t gain);
   as7331_gain_t getGain(void);
 
   bool setIntegrationTime(as7331_time_t time);
   as7331_time_t getIntegrationTime(void);
+
+  bool setClockFrequency(as7331_clock_t clock);
+  as7331_clock_t getClockFrequency(void);
 
   uint16_t readUVA(void);
   uint16_t readUVB(void);
@@ -79,6 +104,22 @@ public:
 
   float readTemperature(void);
   bool isDataReady(void);
+  uint8_t getStatus(void);
+  bool hasOverflow(void);
+  bool hasNewData(void);
+
+  bool setReadyPinOpenDrain(bool openDrain); // true=open-drain, false=push-pull
+  bool getReadyPinOpenDrain(void);
+
+  bool setBreakTime(uint8_t breakTime); // 0-255, time = breakTime * 8µs
+  uint8_t getBreakTime(void);
+
+  bool enableDivider(bool enable);
+  bool setDivider(uint8_t div); // 0-7, factor = 2^(1+div)
+  uint8_t getDivider(void);
+
+  bool setStandby(bool enable);
+  bool getStandby(void);
 
 private:
   bool readRegister(uint8_t reg, uint8_t *value);

@@ -33,6 +33,28 @@ bool Adafruit_AS7331::begin(TwoWire *wire, uint8_t addr) {
   return (part_id == AS7331_PART_ID);
 }
 
+bool Adafruit_AS7331::reset(void) {
+  Adafruit_BusIO_Register osr(_i2c_dev, AS7331_REG_OSR);
+  if (!osr.write(0x0A)) { // SW_RES=1, DOS=010 for config state
+    return false;
+  }
+  delay(10); // Wait for reset to complete
+  return true;
+}
+
+uint8_t Adafruit_AS7331::getDeviceID(void) {
+  Adafruit_BusIO_Register agen(_i2c_dev, AS7331_REG_AGEN);
+  uint8_t id = 0;
+  agen.read(&id);
+  return id;
+}
+
+as7331_mode_t Adafruit_AS7331::getMeasurementMode(void) {
+  Adafruit_BusIO_Register creg3(_i2c_dev, AS7331_REG_CREG3);
+  Adafruit_BusIO_RegisterBits mode_bits(&creg3, 2, 6);
+  return (as7331_mode_t)mode_bits.read();
+}
+
 bool Adafruit_AS7331::powerDown(bool pd) {
   Adafruit_BusIO_Register osr(_i2c_dev, AS7331_REG_OSR);
   Adafruit_BusIO_RegisterBits ss_bit(&osr, 1, 7);
@@ -93,6 +115,18 @@ as7331_time_t Adafruit_AS7331::getIntegrationTime(void) {
   return (as7331_time_t)time_bits.read();
 }
 
+bool Adafruit_AS7331::setClockFrequency(as7331_clock_t clock) {
+  Adafruit_BusIO_Register creg3(_i2c_dev, AS7331_REG_CREG3);
+  Adafruit_BusIO_RegisterBits cclk(&creg3, 2, 0);
+  return cclk.write(clock);
+}
+
+as7331_clock_t Adafruit_AS7331::getClockFrequency(void) {
+  Adafruit_BusIO_Register creg3(_i2c_dev, AS7331_REG_CREG3);
+  Adafruit_BusIO_RegisterBits cclk(&creg3, 2, 0);
+  return (as7331_clock_t)cclk.read();
+}
+
 uint16_t Adafruit_AS7331::readUVA(void) {
   uint16_t value = 0;
   readRegister(AS7331_REG_MRES1, &value);
@@ -145,6 +179,80 @@ bool Adafruit_AS7331::isDataReady(void) {
 
   bool not_ready = (status >> 10) & 0x1;
   return !not_ready;
+}
+
+uint8_t Adafruit_AS7331::getStatus(void) {
+  uint16_t val = 0;
+  readRegister(AS7331_REG_OSR, &val);
+  return (val >> 8) & 0xFF; // STATUS is high byte
+}
+
+bool Adafruit_AS7331::hasOverflow(void) {
+  uint8_t status = getStatus();
+  return (status & (AS7331_STATUS_OUTCONVOF | AS7331_STATUS_MRESOF |
+                    AS7331_STATUS_ADCOF)) != 0;
+}
+
+bool Adafruit_AS7331::hasNewData(void) {
+  uint8_t status = getStatus();
+  return (status & AS7331_STATUS_NDATA) != 0;
+}
+
+bool Adafruit_AS7331::setReadyPinOpenDrain(bool openDrain) {
+  Adafruit_BusIO_Register creg3(_i2c_dev, AS7331_REG_CREG3);
+  Adafruit_BusIO_RegisterBits rdyod(&creg3, 1, 3);
+  return rdyod.write(openDrain);
+}
+
+bool Adafruit_AS7331::getReadyPinOpenDrain(void) {
+  Adafruit_BusIO_Register creg3(_i2c_dev, AS7331_REG_CREG3);
+  Adafruit_BusIO_RegisterBits rdyod(&creg3, 1, 3);
+  return rdyod.read();
+}
+
+bool Adafruit_AS7331::setBreakTime(uint8_t breakTime) {
+  Adafruit_BusIO_Register brk(_i2c_dev, AS7331_REG_BREAK);
+  return brk.write(breakTime);
+}
+
+uint8_t Adafruit_AS7331::getBreakTime(void) {
+  Adafruit_BusIO_Register brk(_i2c_dev, AS7331_REG_BREAK);
+  uint8_t val = 0;
+  brk.read(&val);
+  return val;
+}
+
+bool Adafruit_AS7331::enableDivider(bool enable) {
+  Adafruit_BusIO_Register creg2(_i2c_dev, AS7331_REG_CREG2);
+  Adafruit_BusIO_RegisterBits en_div(&creg2, 1, 3);
+  return en_div.write(enable);
+}
+
+bool Adafruit_AS7331::setDivider(uint8_t div) {
+  if (div > 7) {
+    return false;
+  }
+  Adafruit_BusIO_Register creg2(_i2c_dev, AS7331_REG_CREG2);
+  Adafruit_BusIO_RegisterBits div_bits(&creg2, 3, 0);
+  return div_bits.write(div);
+}
+
+uint8_t Adafruit_AS7331::getDivider(void) {
+  Adafruit_BusIO_Register creg2(_i2c_dev, AS7331_REG_CREG2);
+  Adafruit_BusIO_RegisterBits div_bits(&creg2, 3, 0);
+  return div_bits.read();
+}
+
+bool Adafruit_AS7331::setStandby(bool enable) {
+  Adafruit_BusIO_Register creg3(_i2c_dev, AS7331_REG_CREG3);
+  Adafruit_BusIO_RegisterBits sb(&creg3, 1, 4);
+  return sb.write(enable);
+}
+
+bool Adafruit_AS7331::getStandby(void) {
+  Adafruit_BusIO_Register creg3(_i2c_dev, AS7331_REG_CREG3);
+  Adafruit_BusIO_RegisterBits sb(&creg3, 1, 4);
+  return sb.read();
 }
 
 bool Adafruit_AS7331::readRegister(uint8_t reg, uint8_t *value) {
