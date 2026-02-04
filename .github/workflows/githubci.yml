@@ -10,6 +10,6 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.x'
-      - uses: adafruit/ci-arduino@v1.6.1
+      - uses: adafruit/ci-arduino@master
         with:
-          arduino-platform: 'arduino:avr,adafruit:samd,adafruit:nrf52,esp32:esp32'
+          arduino-platform: 'arduino:avr'

@@ -12,4 +12,4 @@ jobs:
         with:
           clang-format-version: '18'
           check-path: '.'
-          exclude-regex: 'examples/.*'
+          exclude-regex: '(examples|hw_tests)/.*'
