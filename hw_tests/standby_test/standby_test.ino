@@ -53,6 +53,4 @@ void setup() {
   Serial.println(overall ? "PASS" : "FAIL");
 }
 
-void loop() {
-  delay(1000);
-}
+void loop() { delay(1000); }

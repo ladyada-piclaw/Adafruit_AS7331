@@ -4,13 +4,14 @@ Adafruit_AS7331 as7331;
 
 void setup() {
   Serial.begin(115200);
-  while (!Serial) delay(10);
-  
+  while (!Serial)
+    delay(10);
+
   Serial.println("Minimal begin() test");
   Serial.println("====================");
-  
-  delay(100);  // Give sensor time to power up
-  
+
+  delay(100); // Give sensor time to power up
+
   if (as7331.begin()) {
     Serial.println("AS7331 found!");
   } else {
@@ -18,6 +19,4 @@ void setup() {
   }
 }
 
-void loop() {
-  delay(1000);
-}
+void loop() { delay(1000); }

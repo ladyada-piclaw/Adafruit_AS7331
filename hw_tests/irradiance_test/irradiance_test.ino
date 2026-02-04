@@ -78,8 +78,7 @@ void setup() {
   bool off_low = (uva_off < uva_4x * 0.1); // Should be much lower
   Serial.println(off_low ? "LEDs OFF test: PASS" : "LEDs OFF test: FAIL");
 
-  Serial.println(gain_match && off_low ? "\nOverall: PASS"
-                                       : "\nOverall: FAIL");
+  Serial.println(gain_match && off_low ? "\nOverall: PASS" : "\nOverall: FAIL");
 }
 
 void loop() { delay(1000); }

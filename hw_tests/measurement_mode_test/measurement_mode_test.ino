@@ -66,6 +66,4 @@ void setup() {
   }
 }
 
-void loop() {
-  delay(1000);
-}
+void loop() { delay(1000); }

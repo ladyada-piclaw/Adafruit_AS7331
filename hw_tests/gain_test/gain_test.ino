@@ -13,9 +13,8 @@ struct GainStep {
 };
 
 const GainStep gain_steps[] = {
-    {AS7331_GAIN_1X, "1"},  {AS7331_GAIN_2X, "2"},
-    {AS7331_GAIN_4X, "4"},  {AS7331_GAIN_8X, "8"},
-    {AS7331_GAIN_16X, "16"}, {AS7331_GAIN_32X, "32"},
+    {AS7331_GAIN_1X, "1"}, {AS7331_GAIN_2X, "2"},   {AS7331_GAIN_4X, "4"},
+    {AS7331_GAIN_8X, "8"}, {AS7331_GAIN_16X, "16"}, {AS7331_GAIN_32X, "32"},
 };
 
 void setup(void) {
@@ -86,5 +85,4 @@ void setup(void) {
   Serial.println(all_pass ? "Overall: PASS" : "Overall: FAIL");
 }
 
-void loop(void) {
-}
+void loop(void) {}

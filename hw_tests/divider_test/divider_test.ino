@@ -52,7 +52,8 @@ void setup(void) {
 
   bool all_pass = true;
 
-  for (size_t i = 0; i < sizeof(divider_steps) / sizeof(divider_steps[0]); i++) {
+  for (size_t i = 0; i < sizeof(divider_steps) / sizeof(divider_steps[0]);
+       i++) {
     as7331.powerDown(true);
     as7331.enableDivider(true);
     as7331.setDivider(divider_steps[i].div);
@@ -79,5 +80,4 @@ void setup(void) {
   Serial.println(all_pass ? "Overall: PASS" : "Overall: FAIL");
 }
 
-void loop(void) {
-}
+void loop(void) {}

@@ -8,17 +8,17 @@ Adafruit_AS7331 as7331;
 Adafruit_NeoPixel pixels(NEOPIXEL_COUNT, NEOPIXEL_PIN, NEO_GRB + NEO_KHZ800);
 
 static const as7331_clock_t kClocks[] = {
-  AS7331_CLOCK_1024MHZ,
-  AS7331_CLOCK_2048MHZ,
-  AS7331_CLOCK_4096MHZ,
-  AS7331_CLOCK_8192MHZ,
+    AS7331_CLOCK_1024MHZ,
+    AS7331_CLOCK_2048MHZ,
+    AS7331_CLOCK_4096MHZ,
+    AS7331_CLOCK_8192MHZ,
 };
 
 static const char *kClockLabels[] = {
-  "1024MHz",
-  "2048MHz",
-  "4096MHz",
-  "8192MHz",
+    "1024MHz",
+    "2048MHz",
+    "4096MHz",
+    "8192MHz",
 };
 
 void setup() {
@@ -70,5 +70,4 @@ void setup() {
   Serial.println(overall_pass ? "OVERALL PASS" : "OVERALL FAIL");
 }
 
-void loop() {
-}
+void loop() {}

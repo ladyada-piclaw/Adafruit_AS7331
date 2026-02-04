@@ -7,13 +7,14 @@ Adafruit_NeoPixel strip(NUM_LEDS, NEOPIXEL_PIN, NEO_GRB + NEO_KHZ800);
 
 void setup() {
   Serial.begin(115200);
-  while (!Serial) delay(10);
+  while (!Serial)
+    delay(10);
 
   Serial.println("UV LED NeoPixel Test");
   Serial.println("Turning on all 30 UV LEDs...");
 
   strip.begin();
-  strip.setBrightness(255);  // Full brightness
+  strip.setBrightness(255); // Full brightness
 
   // Set all pixels to white (UV LEDs will emit UV)
   for (int i = 0; i < NUM_LEDS; i++) {

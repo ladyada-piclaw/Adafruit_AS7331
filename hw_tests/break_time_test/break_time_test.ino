@@ -70,5 +70,4 @@ void setup(void) {
   Serial.println(all_pass ? "Overall: PASS" : "Overall: FAIL");
 }
 
-void loop(void) {
-}
+void loop(void) {}

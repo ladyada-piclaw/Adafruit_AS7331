@@ -8,13 +8,8 @@ Adafruit_AS7331 as7331;
 Adafruit_NeoPixel pixels(NEOPIXEL_COUNT, NEOPIXEL_PIN, NEO_GRB + NEO_KHZ800);
 
 static const uint8_t kTimes[] = {
-  AS7331_TIME_1MS,
-  AS7331_TIME_2MS,
-  AS7331_TIME_4MS,
-  AS7331_TIME_8MS,
-  AS7331_TIME_16MS,
-  AS7331_TIME_32MS,
-  AS7331_TIME_64MS,
+    AS7331_TIME_1MS,  AS7331_TIME_2MS,  AS7331_TIME_4MS,  AS7331_TIME_8MS,
+    AS7331_TIME_16MS, AS7331_TIME_32MS, AS7331_TIME_64MS,
 };
 
 static const uint16_t kTimeMs[] = {1, 2, 4, 8, 16, 32, 64};
@@ -89,5 +84,4 @@ void setup() {
   Serial.println(overall_pass ? "OVERALL PASS" : "OVERALL FAIL");
 }
 
-void loop() {
-}
+void loop() {}
