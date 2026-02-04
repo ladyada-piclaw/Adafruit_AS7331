@@ -1,5 +1,9 @@
 #include "Adafruit_AS7331.h"
 
+#define AS7331_SENS_UVA 385.0f // counts/(µW/cm²) at GAIN=2048x, TIME=64ms
+#define AS7331_SENS_UVB 347.0f
+#define AS7331_SENS_UVC 794.0f
+
 Adafruit_AS7331::Adafruit_AS7331() {}
 
 bool Adafruit_AS7331::begin(TwoWire *wire, uint8_t addr) {
@@ -22,6 +26,13 @@ bool Adafruit_AS7331::begin(TwoWire *wire, uint8_t addr) {
     return false;
   }
   delay(10); // Wait for reset to complete
+
+  // Cache default gain/time values
+  Adafruit_BusIO_Register creg1(_i2c_dev, AS7331_REG_CREG1);
+  uint8_t creg1_val = 0;
+  creg1.read(&creg1_val);
+  _cached_gain = (creg1_val >> 4) & 0x0F;
+  _cached_time = creg1_val & 0x0F;
 
   // Verify we're in config state by reading AGEN (0x02)
   Adafruit_BusIO_Register agen(_i2c_dev, AS7331_REG_AGEN);
@@ -94,7 +105,11 @@ bool Adafruit_AS7331::setMeasurementMode(as7331_mode_t mode) {
 bool Adafruit_AS7331::setGain(as7331_gain_t gain) {
   Adafruit_BusIO_Register creg1(_i2c_dev, AS7331_REG_CREG1);
   Adafruit_BusIO_RegisterBits gain_bits(&creg1, 4, 4);
-  return gain_bits.write(gain);
+  if (gain_bits.write(gain)) {
+    _cached_gain = gain;
+    return true;
+  }
+  return false;
 }
 
 as7331_gain_t Adafruit_AS7331::getGain(void) {
@@ -106,7 +121,11 @@ as7331_gain_t Adafruit_AS7331::getGain(void) {
 bool Adafruit_AS7331::setIntegrationTime(as7331_time_t time) {
   Adafruit_BusIO_Register creg1(_i2c_dev, AS7331_REG_CREG1);
   Adafruit_BusIO_RegisterBits time_bits(&creg1, 4, 0);
-  return time_bits.write(time);
+  if (time_bits.write(time)) {
+    _cached_time = time;
+    return true;
+  }
+  return false;
 }
 
 as7331_time_t Adafruit_AS7331::getIntegrationTime(void) {
@@ -161,6 +180,58 @@ bool Adafruit_AS7331::readAllUV(uint16_t *uva, uint16_t *uvb, uint16_t *uvc) {
     *uvc = (uint16_t)buffer[4] | ((uint16_t)buffer[5] << 8);
   }
 
+  return true;
+}
+
+float Adafruit_AS7331::_countsToIrradiance(uint16_t counts,
+                                           float baseSensitivity) {
+  // Use cached values instead of reading registers
+  uint8_t gain_setting = _cached_gain;
+  uint8_t time_setting = _cached_time;
+
+  float gain_factor = (float)(1 << (11 - gain_setting));
+  float time_factor = (float)(1 << time_setting) / 64.0f;
+
+  float effective_sens =
+      baseSensitivity * (gain_factor / 2048.0f) * time_factor;
+
+  if (effective_sens < 0.001f) {
+    return 0.0f;
+  }
+  return (float)counts / effective_sens;
+}
+
+float Adafruit_AS7331::readUVA_uWcm2(void) {
+  uint16_t counts = readUVA();
+  return _countsToIrradiance(counts, AS7331_SENS_UVA);
+}
+
+float Adafruit_AS7331::readUVB_uWcm2(void) {
+  uint16_t counts = readUVB();
+  return _countsToIrradiance(counts, AS7331_SENS_UVB);
+}
+
+float Adafruit_AS7331::readUVC_uWcm2(void) {
+  uint16_t counts = readUVC();
+  return _countsToIrradiance(counts, AS7331_SENS_UVC);
+}
+
+bool Adafruit_AS7331::readAllUV_uWcm2(float *uva, float *uvb, float *uvc) {
+  uint16_t uva_raw = 0;
+  uint16_t uvb_raw = 0;
+  uint16_t uvc_raw = 0;
+  if (!readAllUV(&uva_raw, &uvb_raw, &uvc_raw)) {
+    return false;
+  }
+  if (uva) {
+    *uva = _countsToIrradiance(uva_raw, AS7331_SENS_UVA);
+  }
+  if (uvb) {
+    *uvb = _countsToIrradiance(uvb_raw, AS7331_SENS_UVB);
+  }
+  if (uvc) {
+    *uvc = _countsToIrradiance(uvc_raw, AS7331_SENS_UVC);
+  }
   return true;
 }
 

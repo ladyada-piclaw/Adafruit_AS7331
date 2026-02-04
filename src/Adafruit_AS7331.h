@@ -103,6 +103,11 @@ public:
   uint16_t readUVC(void);
   bool readAllUV(uint16_t *uva, uint16_t *uvb, uint16_t *uvc);
 
+  float readUVA_uWcm2(void); // Read UVA and convert to µW/cm²
+  float readUVB_uWcm2(void); // Read UVB and convert to µW/cm²
+  float readUVC_uWcm2(void); // Read UVC and convert to µW/cm²
+  bool readAllUV_uWcm2(float *uva, float *uvb, float *uvc);
+
   float readTemperature(void);
   bool isDataReady(void);
   uint8_t getStatus(void);
@@ -133,5 +138,9 @@ private:
   bool readRegister(uint8_t reg, uint16_t *value);
   bool readRegisters(uint8_t reg, uint8_t *buffer, uint8_t len);
 
+  float _countsToIrradiance(uint16_t counts, float baseSensitivity);
+
   Adafruit_I2CDevice *_i2c_dev = nullptr;
+  uint8_t _cached_gain = 10; // Default: AS7331_GAIN_2X
+  uint8_t _cached_time = 6;  // Default: AS7331_TIME_64MS
 };
