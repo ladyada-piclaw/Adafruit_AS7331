@@ -13,8 +13,18 @@ bool Adafruit_AS7331::begin(TwoWire *wire, uint8_t addr) {
     return false;
   }
 
-  Adafruit_BusIO_Register agen =
-      Adafruit_BusIO_Register(_i2c_dev, AS7331_REG_AGEN);
+  // Software reset to ensure we're in Configuration State.
+  // The sensor retains state across Arduino resets, so we must
+  // reset it to read AGEN (which shares address with MRES1).
+  // Write OSR = 0x0A (SW_RES=1, DOS=010 for config state)
+  Adafruit_BusIO_Register osr(_i2c_dev, AS7331_REG_OSR);
+  if (!osr.write(0x0A)) {
+    return false;
+  }
+  delay(10); // Wait for reset to complete
+
+  // Verify we're in config state by reading AGEN (0x02)
+  Adafruit_BusIO_Register agen(_i2c_dev, AS7331_REG_AGEN);
   uint8_t part_id = 0;
   if (!agen.read(&part_id)) {
     return false;
