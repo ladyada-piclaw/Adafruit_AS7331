@@ -243,9 +243,8 @@ as7331_clock_t Adafruit_AS7331::getClockFrequency(void) {
  * @return UVA measurement counts
  */
 uint16_t Adafruit_AS7331::readUVA(void) {
-  uint16_t value = 0;
-  readRegister(AS7331_REG_MRES1, &value);
-  return value;
+  Adafruit_BusIO_Register mres1(_i2c_dev, AS7331_REG_MRES1, 2, LSBFIRST);
+  return mres1.read();
 }
 
 /**
@@ -253,9 +252,8 @@ uint16_t Adafruit_AS7331::readUVA(void) {
  * @return UVB measurement counts
  */
 uint16_t Adafruit_AS7331::readUVB(void) {
-  uint16_t value = 0;
-  readRegister(AS7331_REG_MRES2, &value);
-  return value;
+  Adafruit_BusIO_Register mres2(_i2c_dev, AS7331_REG_MRES2, 2, LSBFIRST);
+  return mres2.read();
 }
 
 /**
@@ -263,9 +261,8 @@ uint16_t Adafruit_AS7331::readUVB(void) {
  * @return UVC measurement counts
  */
 uint16_t Adafruit_AS7331::readUVC(void) {
-  uint16_t value = 0;
-  readRegister(AS7331_REG_MRES3, &value);
-  return value;
+  Adafruit_BusIO_Register mres3(_i2c_dev, AS7331_REG_MRES3, 2, LSBFIRST);
+  return mres3.read();
 }
 
 /**
@@ -277,7 +274,8 @@ uint16_t Adafruit_AS7331::readUVC(void) {
  */
 bool Adafruit_AS7331::readAllUV(uint16_t *uva, uint16_t *uvb, uint16_t *uvc) {
   uint8_t buffer[6] = {0};
-  if (!readRegisters(AS7331_REG_MRES1, buffer, sizeof(buffer))) {
+  uint8_t reg = AS7331_REG_MRES1;
+  if (!_i2c_dev->write_then_read(&reg, 1, buffer, sizeof(buffer))) {
     return false;
   }
 
@@ -445,9 +443,8 @@ bool Adafruit_AS7331::oneShot_uWcm2(float *uva, float *uvb, float *uvc) {
  * @return Temperature in degrees Celsius
  */
 float Adafruit_AS7331::readTemperature(void) {
-  uint16_t raw = 0;
-  readRegister(AS7331_REG_TEMP, &raw);
-  raw &= 0x0FFF;
+  Adafruit_BusIO_Register temp_reg(_i2c_dev, AS7331_REG_TEMP, 2, LSBFIRST);
+  uint16_t raw = temp_reg.read() & 0x0FFF;
   return (raw * 0.05f) - 66.9f;
 }
 
@@ -456,13 +453,9 @@ float Adafruit_AS7331::readTemperature(void) {
  * @return true if data is ready, false otherwise
  */
 bool Adafruit_AS7331::isDataReady(void) {
-  uint16_t status = 0;
-  if (!readRegister(AS7331_REG_OSR, &status)) {
-    return false;
-  }
-
-  bool not_ready = (status >> 10) & 0x1;
-  return !not_ready;
+  Adafruit_BusIO_Register osr(_i2c_dev, AS7331_REG_OSR, 2, LSBFIRST);
+  Adafruit_BusIO_RegisterBits nready(&osr, 1, 10);
+  return !nready.read();
 }
 
 /**
@@ -470,9 +463,9 @@ bool Adafruit_AS7331::isDataReady(void) {
  * @return Status register value
  */
 uint8_t Adafruit_AS7331::getStatus(void) {
-  uint16_t val = 0;
-  readRegister(AS7331_REG_OSR, &val);
-  return (val >> 8) & 0xFF; // STATUS is high byte
+  Adafruit_BusIO_Register osr(_i2c_dev, AS7331_REG_OSR, 2, LSBFIRST);
+  Adafruit_BusIO_RegisterBits status_bits(&osr, 8, 8);
+  return status_bits.read();
 }
 
 /**
@@ -640,38 +633,4 @@ bool Adafruit_AS7331::getStandby(void) {
   Adafruit_BusIO_Register creg3(_i2c_dev, AS7331_REG_CREG3);
   Adafruit_BusIO_RegisterBits sb(&creg3, 1, 4);
   return sb.read();
-}
-
-/**
- * @brief Read an 8-bit register
- * @param reg Register address
- * @param value Pointer to storage for the read value
- * @return true if the operation succeeded, false otherwise
- */
-bool Adafruit_AS7331::readRegister(uint8_t reg, uint8_t *value) {
-  Adafruit_BusIO_Register bus_reg(_i2c_dev, reg);
-  return bus_reg.read(value);
-}
-
-/**
- * @brief Read a 16-bit register
- * @param reg Register address
- * @param value Pointer to storage for the read value
- * @return true if the operation succeeded, false otherwise
- */
-bool Adafruit_AS7331::readRegister(uint8_t reg, uint16_t *value) {
-  Adafruit_BusIO_Register bus_reg(_i2c_dev, reg, 2, LSBFIRST);
-  return bus_reg.read(value);
-}
-
-/**
- * @brief Read multiple bytes starting at a register address
- * @param reg Starting register address
- * @param buffer Buffer to fill with data
- * @param len Number of bytes to read
- * @return true if the operation succeeded, false otherwise
- */
-bool Adafruit_AS7331::readRegisters(uint8_t reg, uint8_t *buffer, uint8_t len) {
-  Adafruit_BusIO_Register bus_reg(_i2c_dev, reg, len, LSBFIRST);
-  return bus_reg.read(buffer, len);
 }

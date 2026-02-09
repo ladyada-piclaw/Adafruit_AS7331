@@ -160,10 +160,6 @@ public:
   bool getStandby(void);
 
 private:
-  bool readRegister(uint8_t reg, uint8_t *value);
-  bool readRegister(uint8_t reg, uint16_t *value);
-  bool readRegisters(uint8_t reg, uint8_t *buffer, uint8_t len);
-
   float _countsToIrradiance(uint16_t counts, float baseSensitivity);
 
   Adafruit_I2CDevice *_i2c_dev = nullptr; ///< Pointer to I2C device
